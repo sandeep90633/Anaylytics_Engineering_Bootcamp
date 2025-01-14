@@ -11,6 +11,8 @@
 
 -- CREATE TYPE scoring_class AS ENUM('star','good','avg','bad');
 
+-- DROP TABLE players;
+
 -- CREATE TABLE players (
 --     player_name TEXT,
 --     height TEXT,
@@ -23,19 +25,18 @@
 --     scoring_class scoring_class,
 --     years_since_last_season INTEGER,
 --     current_season INTEGER,
+--     is_active BOOLEAN,
 --     PRIMARY KEY(player_name, current_season)
 -- );
-
--- DROP TABLE players;
 
 INSERT INTO players
 WITH yesterday AS (
     SELECT * FROM players
-    WHERE current_season = 2000
+    WHERE current_season = 2021
 ),
 today AS (
     SELECT * FROM player_seasons
-    WHERE season = 2001
+    WHERE season = 2022
 )
 
 SELECT 
@@ -80,7 +81,11 @@ SELECT
         WHEN t.season IS NOT NULL THEN 0 
         ELSE y.years_since_last_season + 1 
     END AS years_since_last_season,
-    COALESCE(t.season, y.current_season +1) as current_season
+    COALESCE(t.season, y.current_season +1) as current_season,
+    CASE 
+        WHEN t.season IS NOT NULL THEN TRUE
+        ELSE FALSE
+    END AS is_active
 
 FROM 
     today t 
@@ -88,11 +93,3 @@ FULL OUTER JOIN
     yesterday y
 ON
     t.player_name = y.player_name;
-
-
-SELECT 
-    player_name,
-    (season_stats[1]::season_stats).pts AS first_season,
-    (season_stats[cardinality(season_stats)]::season_stats).pts AS latest_season
-FROM players
-WHERE current_season = 2001 AND player_name = 'Don MacLean';
